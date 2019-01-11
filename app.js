@@ -1,14 +1,16 @@
-// You need to create own server with Node, no apache
+const saturday = require('./saturday');
 
-// Require loads modules
-const http = require('http');
-const route = require('./modules/router');
+const app = new saturday();
 
-const server = http.createServer(route.router);
+app.spawn_server();
 
-const hostname = '127.0.0.1';
-const port = 8000;
+const hello = (request, response) => {
+    const q = app.extract_query(request.url);
+    console.log(q);
+    response.statusCode = 200;
+    response.setHeader('Content-Type', 'text/plain');
+    response.write('HELLO WORLD, THIS IS FROM HELLO() IN APP.JS');
+    response.end();
+}
 
-server.listen(port, hostname, () => {
-    console.log(`Server is online and listening on http://${ hostname }:${ port }`);
-});   
+app.route('/query', hello);
