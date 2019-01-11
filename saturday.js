@@ -4,18 +4,47 @@ module.exports = class Saturday {
 
     constructor() {
         this.http = require('http');
-        this.endpoints = [];
+        this.endpoints = {
+            "get":[],
+            "post":[],
+            "put": [],
+            "delete":[]
+        };
     }
 
+    // handles get, post, put, and delete requests
     request_handle(request, response) {
+
         // 405 method not allowed
         const route = request.url.split('?')[0];
 
-        console.log(route);
+        const method = request.method.toLowerCase();
+        
+        console.log(`Route: ${route} Method: ${method}`);
 
-        for (let i = 0; i < this.endpoints.length; i++) {
-            if (this.endpoints[i].route == route) {
-                this.endpoints[i].command(request, response);
+        for (let i = 0; i < this.endpoints[method].length; i++) {
+            
+            if (this.endpoints[method][i].route === route) {
+
+                if (method === "post") {
+                    
+                    // Post data comes in stream
+                    let body = [];
+                    
+                    request.on('error', (err) => {
+                        console.error(err);
+                    }).on('data', (chunk) => {
+                        body.push(chunk);
+                    }).on('end', () => {
+                        this.endpoints[method][i].command(request, response, body);
+                    });
+
+                } else {
+                    
+                    this.endpoints[method][i].command(request, response);
+                
+                }
+
                 break;
             }
         }
@@ -34,8 +63,17 @@ module.exports = class Saturday {
     }
 
     // Adds route into endpoints array, later to be used by request_handle
-    route(end, task) {
-        this.endpoints.push({"route": end, "command":task});
+    get(end, task) {
+        this.endpoints["get"].push({"route": end, "command":task});
+    }
+    post(end, task) {
+        this.endpoints["post"].push({"route": end, "command":task});
+    }
+    put(end, task) {
+        this.endpoints["put"].push({"route": end, "command":task});
+    }
+    delete(end, task) {
+        this.endpoints["delete"].push({"route": end, "command":task});
     }
 
     // Extracts queries from url, and return in object array
