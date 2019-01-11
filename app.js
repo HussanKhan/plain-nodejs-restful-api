@@ -18,7 +18,8 @@ const hello = (request, response) => {
 }
 app.get('/', hello);
 
-const signup = (request, response) => {
+
+app.get('/signup', (request, response) => {
 
     file_system.readFile('templates/login.html', (err, html) => {
         if (err) {
@@ -37,14 +38,12 @@ const signup = (request, response) => {
         response.end();
     })
     
-}
-const register_user = (request, response, postdata) => {
+});
+
+app.post('/signup', (request, response, postdata) => {
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/plain');
     response.write(`Email: ${postdata.email}\nPassword: ${postdata.password}\nToken: ${postdata.token}`);
     response.end();
-}
-
-app.get('/signup', signup);
-app.post('/signup', register_user);
+});
 
