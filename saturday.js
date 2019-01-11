@@ -22,9 +22,8 @@ module.exports = class Saturday {
         
         console.log(`Route: ${route} Method: ${method}`);
 
-        for (let i = 0; i < this.endpoints[method].length; i++) {
-            
-            if (this.endpoints[method][i].route === route) {
+        this.endpoints[method].forEach(endpoint => {
+            if (endpoint.route === route) {
 
                 if (method === "post") {
                     
@@ -36,18 +35,21 @@ module.exports = class Saturday {
                     }).on('data', (chunk) => {
                         body.push(chunk);
                     }).on('end', () => {
-                        this.endpoints[method][i].command(request, response, body);
+                        body = body.toString();
+                        body  = this.extract_post(body);
+                        endpoint.command(request, response, body);
                     });
 
                 } else {
                     
-                    this.endpoints[method][i].command(request, response);
+                    endpoint.command(request, response);
                 
                 }
 
-                break;
+                return 0;
             }
-        }
+
+        });
     };
 
     // Creates server and begins listening
@@ -66,6 +68,7 @@ module.exports = class Saturday {
     get(end, task) {
         this.endpoints["get"].push({"route": end, "command":task});
     }
+    // Returns object of post data
     post(end, task) {
         this.endpoints["post"].push({"route": end, "command":task});
     }
@@ -87,6 +90,19 @@ module.exports = class Saturday {
         });
 
         return query_obj;
+    }
+
+    // Extracts post data
+    extract_post(postdata) {
+        const post_array = postdata.split("&");
+        const post_obj = {};
+
+        post_array.forEach(p_str => {
+            const p_piece = p_str.split("=");
+            post_obj[p_piece[0]] = p_piece[1];
+        });
+
+        return post_obj;
     }
 
 }

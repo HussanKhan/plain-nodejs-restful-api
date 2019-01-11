@@ -33,6 +33,7 @@ const signup = (request, response) => {
         const rendered_html = html.toString().replace("${token}", token);
 
         response.write(rendered_html);
+
         response.end();
     })
     
@@ -40,7 +41,7 @@ const signup = (request, response) => {
 const register_user = (request, response, postdata) => {
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/plain');
-    response.write(postdata);
+    response.write(`Email: ${postdata.email}\nPassword: ${postdata.password}\nToken: ${postdata.token}`);
     response.end();
 }
 
