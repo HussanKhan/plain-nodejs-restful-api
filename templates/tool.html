@@ -5,24 +5,26 @@
 
     <body>
 
-        <nav>
-            <ul class="nav_list">
-                <li class="sitename">PageSum</li>
-                <li>Register</li>
-            </ul>
-        </nav>
-        
         <div class="form_cont">
+                <p class="sitename">PageSum</p>
+                <p style="margin: 0px; opacity: 0.5; margin-bottom: 8%; font-weight: 600;">Quickly Summarize Articles</p>
                 <form action="" method="post">
                         <input type="text" name="req_url" class="input_box">
                         <input type="hidden" name="token" value="${token}">
                     </form>
-                <p class="summary">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce facilisis augue turpis, at ultrices justo ultricies nec. Nullam rutrum neque lacus, rhoncus elementum mi scelerisque ut. Mauris vel nibh sed ante consequat sollicitudin. In suscipit tincidunt elit eu vulputate. Vestibulum tempus, ante vel consequat rhoncus, dolor leo sollicitudin mauris, nec rutrum nisi est et tellus. Nam aliquam congue pharetra. Sed sit amet vestibulum velit. Aenean tempus nisl sed augue tempor pulvinar. Nullam venenatis lectus vel massa interdum eleifend. Fusce tristique ultricies mi, sit amet sodales nibh dictum id. Etiam neque ipsum, porttitor consectetur tellus non, malesuada dictum erat. Nunc libero sapien, blandit id luctus eget, tristique nec tortor. Pellentesque ultrices purus leo, ac elementum massa accumsan euismod.</p>
+                <p class="summary" style="margin-top: 2%; font-weight: 400; opacity: 0.6; line-height: 30px; font-size: 1.1em;">Lorem ipsum dolor sit amet, 
+                    consectetur adipiscing elit. Fusce facilisis augue turpis, at ultrices justo ultricies nec. Nullam rutrum neque lacus, 
+                    rhoncus elementum mi scelerisque ut. Mauris vel nibh sed ante consequat sollicitudin. In suscipit tincidunt elit eu vulputate. 
+                    Vestibulum tempus, ante vel consequat rhoncus, dolor leo sollicitudin mauris, nec rutrum nisi est et tellus. Nam aliquam congue 
+                    pharetra. Sed sit amet vestibulum velit. Aenean tempus nisl sed augue tempor pulvinar. Nullam venenatis lectus vel massa interdum 
+                    eleifend. Fusce tristique ultricies mi, sit amet sodales nibh dictum id. Etiam neque ipsum, porttitor consectetur tellus non, 
+                    malesuada dictum erat. Nunc libero sapien, blandit id luctus eget, tristique nec tortor. Pellentesque ultrices purus leo, ac 
+                    elementum massa accumsan euismod.</p>
         </div>
         
     </body>
 
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,900" rel="stylesheet">
 
     <style>
 
@@ -39,27 +41,29 @@
         .sitename {
             color: #706fd3;
             font-size: 2em;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            font-weight: 600;
+            margin: 0px;
         }
 
         body {
-            font-family: 'Open Sans', sans-serif;
+            font-family: 'Lato', sans-serif;
         }
         
         .input_box {
-            border-width: 0px;
-            font-size: 1.1em;
+            font-size: 1.2em;
+            color: #00000091;
+            border: 1px solid #e4e6f2;
             border-radius: 5px;
             width: 100%;
-            height: 35px;
-            padding: 4%;
+            height: 30px;
+            padding: 3%;
             outline: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            box-shadow: 0 19px 40px rgba(187,192,211,.2);
         }
         .form_cont {
             margin: 0 auto;
-            width: 33%;
-            margin-top: 10%;
+            width: 48%;
+            margin-top: 7%;
             display: flex;
             flex-direction: column;
         }
