@@ -4,6 +4,7 @@ module.exports = class Saturday {
 
     constructor() {
         this.http = require('http');
+        this.crypto = require('crypto');
         this.endpoints = {
             "get":[],
             "post":[],
@@ -30,14 +31,21 @@ module.exports = class Saturday {
                     // Post data comes in stream
                     let body = [];
                     
-                    request.on('error', (err) => {
-                        console.error(err);
-                    }).on('data', (chunk) => {
+                    // Data chunk detected
+                    request.on('data', (chunk) => {
                         body.push(chunk);
-                    }).on('end', () => {
+                    });
+                    
+                    // End of data stream detected
+                    request.on('end', () => {
                         body = body.toString();
                         body  = this.extract_post(body);
                         endpoint.command(request, response, body);
+                    });
+
+                    // If error raised in request
+                    request.on('error', (err) => {
+                        console.error(err);
                     });
 
                 } else {
@@ -103,6 +111,11 @@ module.exports = class Saturday {
         });
 
         return post_obj;
+    }
+
+    token(bytes) {
+        const token = this.crypto.randomBytes(bytes).toString('hex');
+        return token;
     }
 
 }

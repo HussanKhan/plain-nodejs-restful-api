@@ -1,24 +1,30 @@
 const saturday = require('./saturday');
 // File system, loads html and stuff like json
 const file_system = require('fs');
-// for csfr and tokens
-const crypto = require('crypto');
 
 const app = new saturday();
 
 app.spawn_server();
 
 
+app.get('/', (request, response) => {
+    file_system.readFile('templates/tool.html', (err, html) => {
+        if (err) {
+            throw err;
+        }
 
-const hello = (request, response) => {
-    response.statusCode = 200;
-    response.setHeader('Content-Type', 'text/plain');
-    response.write('HELLO WORLD, THIS IS FROM HELLO() IN APP.JS');
-    response.end();
-}
-app.get('/', hello);
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'text/html');
+        
+        const rendered_html = html.toString().replace("${token}", app.token(16));
 
+        response.write(rendered_html);
 
+        response.end();
+    })
+});
+
+// SIGN UP
 app.get('/signup', (request, response) => {
 
     file_system.readFile('templates/login.html', (err, html) => {
@@ -29,9 +35,9 @@ app.get('/signup', (request, response) => {
         response.statusCode = 200;
         response.setHeader('Content-Type', 'text/html');
 
-        const token = crypto.randomBytes(16).toString('hex');
         
-        const rendered_html = html.toString().replace("${token}", token);
+        
+        const rendered_html = html.toString().replace("${token}", app.token(16));
 
         response.write(rendered_html);
 
@@ -43,7 +49,20 @@ app.get('/signup', (request, response) => {
 app.post('/signup', (request, response, postdata) => {
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/plain');
+    const token = app.token(32);
+    response.setHeader('Set-Cookie', `token=${token}; Max-Age=3600;`);
     response.write(`Email: ${postdata.email}\nPassword: ${postdata.password}\nToken: ${postdata.token}`);
     response.end();
 });
+
+
+const simplereq = require('./simplerequest');
+app.get('/test', (request, response) => {
+    simplereq.make_request('https://arstechnica.com/gaming/2019/01/unity-engine-tos-change-makes-cloud-based-spatialos-games-illegal/', (data) => {
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'text/plain');
+        response.write(data);
+        response.end();
+    })
+})
 
