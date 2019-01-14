@@ -62,3 +62,30 @@ datab.connect(url, (err, client) => {
     });  
  
 });
+
+
+
+
+
+
+
+collection.find({email: postdata.email}).toArray((err,stuff) => {
+    if (stuff.length == 0) {
+
+        bcrypt.hash(postdata.password, saltRounds, (err, hash) => {
+            collection.insertOne({email:postdata.email, password: hash}, (err, res) => {
+                if (!(err)) {
+                    console.log("SUCCESSFUL INSERT");
+                    response.write("SUCCESSFUL INSERT");
+                } else {
+                    console.log("FAILED INSERT");
+                    response.write("FAILED INSERT");
+                }
+                response.end();
+            });
+        });  
+    } else {
+        response.write("EMAIL ALREADY IN DATABASE");
+        response.end();
+    }
+});
