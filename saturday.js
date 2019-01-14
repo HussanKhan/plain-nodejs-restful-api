@@ -1,6 +1,7 @@
 module.exports = class Saturday {
 
-    // This class is used to work with nodejs
+    // This is a small framework for nodejs
+    // meant to handle common operations
 
     constructor() {
         this.http = require('http');
@@ -13,7 +14,7 @@ module.exports = class Saturday {
         };
     }
 
-    // handles get, post, put, and delete requests
+    // Called when server recieves request
     request_handle(request, response) {
 
         // 405 method not allowed
@@ -24,8 +25,10 @@ module.exports = class Saturday {
         console.log(`Route: ${route} Method: ${method}`);
 
         this.endpoints[method].forEach(endpoint => {
+            
             if (endpoint.route === route) {
 
+                // POST data handled differently 
                 if (method === "post") {
                     
                     // Post data comes in stream
@@ -36,7 +39,7 @@ module.exports = class Saturday {
                         body.push(chunk);
                     });
                     
-                    // End of data stream detected
+                    // End of data stream detected, return data
                     request.on('end', () => {
                         body = body.toString();
                         body  = this.extract_post(body);
@@ -49,11 +52,10 @@ module.exports = class Saturday {
                     });
 
                 } else {
-                    
+                    // If not post, callback function called
                     endpoint.command(request, response);
-                
                 }
-
+                
                 return 0;
             }
 
@@ -61,11 +63,10 @@ module.exports = class Saturday {
     };
 
     // Creates server and begins listening
-    spawn_server() {
+    listen(port=8000) {
         console.log(this.endpoints);
         const server = this.http.createServer(this.request_handle.bind(this));
         const hostname = '127.0.0.1';
-        const port = 8000;
 
         server.listen(port, hostname, () => {
             console.log(`Server is online and listening on http://${ hostname }:${ port }`);
@@ -76,13 +77,15 @@ module.exports = class Saturday {
     get(end, task) {
         this.endpoints["get"].push({"route": end, "command":task});
     }
-    // Returns object of post data
+
     post(end, task) {
         this.endpoints["post"].push({"route": end, "command":task});
     }
+    
     put(end, task) {
         this.endpoints["put"].push({"route": end, "command":task});
     }
+    
     delete(end, task) {
         this.endpoints["delete"].push({"route": end, "command":task});
     }
@@ -113,6 +116,7 @@ module.exports = class Saturday {
         return post_obj;
     }
 
+    // Creates token of some byte length
     token(bytes) {
         const token = this.crypto.randomBytes(bytes).toString('hex');
         return token;
