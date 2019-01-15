@@ -24,7 +24,8 @@ datab.connect(url, (err, client) => {
     const db = client.db("user_Accounts");
 
     const collection = db.collection('pagesum_user');
-    
+
+    // LANDING PAGE
     app.get('/', (request, response) => {
         file_system.readFile('templates/tool.html', (err, html) => {
             if (err) {
@@ -67,8 +68,6 @@ datab.connect(url, (err, client) => {
     const bcrypt = require('bcrypt');
     const saltRounds = 10;
     app.post('/signup', (request, response, postdata) => {
-        response.statusCode = 200;
-        response.setHeader('Content-Type', 'text/plain');
         
         collection.find({email: postdata.email}).toArray((err,stuff) => {
             if (stuff.length == 0) {
@@ -77,8 +76,11 @@ datab.connect(url, (err, client) => {
                     collection.insertOne({email:postdata.email, password: hash}, (err, res) => {
                         if (!(err)) {
                             console.log("SUCCESSFUL INSERT");
-                            response.write("SUCCESSFUL INSERT");
+                            response.statusCode = 303;
+                            response.setHeader('Location', '/login');
                         } else {
+                            response.statusCode = 200;
+                            response.setHeader('Content-Type', 'text/plain');
                             console.log("FAILED INSERT");
                             response.write("FAILED INSERT");
                         }
@@ -87,6 +89,8 @@ datab.connect(url, (err, client) => {
                 });  
 
             } else {
+                response.statusCode = 200;
+                response.setHeader('Content-Type', 'text/plain');
                 response.write("EMAIL ALREADY IN DATABASE");
                 response.end();
             }
@@ -112,8 +116,6 @@ datab.connect(url, (err, client) => {
     });
 
     app.post('/login', (request, response, postdata) => {
-        response.statusCode = 200;
-        response.setHeader('Content-Type', 'text/plain');
         
         collection.find({email: postdata.email}).toArray((err,stuff) => {
             if (stuff.length == 0) {
@@ -122,10 +124,13 @@ datab.connect(url, (err, client) => {
             } else {
                 bcrypt.compare(postdata.password, stuff[0].password, function(err, res) {
                     if (res) {
-                        response.write("SUCCESSFUL LOGIN");
+                        response.statusCode = 303;
+                        response.setHeader('Location', '/');
                     } else {
+                        response.statusCode = 200;
+                        response.setHeader('Content', 'text/plain');
                         response.write("PASSWORD DID NOT MATCH");
-                    }
+                    }  
                     response.end();
                 })
                 
@@ -133,7 +138,7 @@ datab.connect(url, (err, client) => {
         });
     });
     
-    
+    // API CONNECTION
     const simplereq = require('./simplerequest');
     app.get('/scan', (request, response) => {
         const url_query = app.extract_query(request.url);
