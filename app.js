@@ -20,26 +20,46 @@ datab.connect(url, (err, client) => {
     // We are connected
     console.log('Connection established to', url);
         
-    // Get the documents collection
+    // Get the documents user_collection
     const db = client.db("user_Accounts");
 
-    const collection = db.collection('pagesum_user');
+    const user_collection = db.collection('pagesum_user');
 
     // LANDING PAGE
     app.get('/', (request, response) => {
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'text/html');
+        
         file_system.readFile('templates/tool.html', (err, html) => {
             if (err) {
                 throw err;
             }
-    
-            response.statusCode = 200;
-            response.setHeader('Content-Type', 'text/html');
+
+            let rendered_html = html.toString().replace("${token}", app.token(16));
+
+            const poss_cookie = request.headers.cookie;
             
-            const rendered_html = html.toString().replace("${token}", app.token(16));
-    
-            response.write(rendered_html);
-    
-            response.end();
+            if (poss_cookie) {
+                const user_id = poss_cookie.replace('pagesumtoken=', '');
+                const user_ip = request.connection.remoteAddress;
+                
+                user_collection.findOne({token: user_id, last_ip: user_ip}, (err, res) => {
+                    
+                    if (res) {
+                        rendered_html = rendered_html.replace("${user_email}", res.email.replace("%40", "@"));
+                    }
+
+                    response.write(rendered_html);
+                    response.end(); 
+                });
+
+                console.log(user_id);
+                console.log(user_ip);
+            } else {
+                console.log("Not in db");
+                response.write(rendered_html);
+                response.end(); 
+            }
         })
     });
     
@@ -68,12 +88,18 @@ datab.connect(url, (err, client) => {
     const bcrypt = require('bcrypt');
     const saltRounds = 10;
     app.post('/signup', (request, response, postdata) => {
-        
-        collection.find({email: postdata.email}).toArray((err,stuff) => {
+
+        user_collection.find({email: postdata.email}).toArray((err,stuff) => {
             if (stuff.length == 0) {
         
                 bcrypt.hash(postdata.password, saltRounds, (err, hash) => {
-                    collection.insertOne({email:postdata.email, password: hash}, (err, res) => {
+                    
+                    user_collection.insertOne(
+                        {   
+                            email:postdata.email, 
+                            password: hash
+                        }, (err, res) => {
+                        
                         if (!(err)) {
                             console.log("SUCCESSFUL INSERT");
                             response.statusCode = 303;
@@ -84,6 +110,7 @@ datab.connect(url, (err, client) => {
                             console.log("FAILED INSERT");
                             response.write("FAILED INSERT");
                         }
+                        
                         response.end();
                     });
                 });  
@@ -117,7 +144,7 @@ datab.connect(url, (err, client) => {
 
     app.post('/login', (request, response, postdata) => {
         
-        collection.find({email: postdata.email}).toArray((err,stuff) => {
+        user_collection.find({email: postdata.email}).toArray((err,stuff) => {
             if (stuff.length == 0) {
                 response.write("ACCOUNT DOES NOT EXIST");
                 response.end();
@@ -125,7 +152,13 @@ datab.connect(url, (err, client) => {
                 bcrypt.compare(postdata.password, stuff[0].password, function(err, res) {
                     if (res) {
                         response.statusCode = 303;
+                        
+                        const utoken = app.token(32);
+                        const user_ip = request.connection.remoteAddress;
+
+                        response.setHeader('Set-Cookie', `pagesumtoken=${utoken}; Max-Age=259200`);
                         response.setHeader('Location', '/');
+                        user_collection.updateOne({email: postdata.email}, {$set:{token: utoken, last_ip: user_ip}}, (err, res) => {});
                     } else {
                         response.statusCode = 200;
                         response.setHeader('Content', 'text/plain');
@@ -137,7 +170,7 @@ datab.connect(url, (err, client) => {
             }
         });
     });
-    
+     
     // API CONNECTION
     const simplereq = require('./simplerequest');
     app.get('/scan', (request, response) => {
@@ -150,7 +183,7 @@ datab.connect(url, (err, client) => {
         })
     })
 
-    const res = collection.find({}).toArray((err,stuff) => {
+    const res = user_collection.find({}).toArray((err,stuff) => {
         console.log(stuff);
     });
     
