@@ -6,6 +6,7 @@ module.exports = class Saturday {
     constructor() {
         this.http = require('http');
         this.crypto = require('crypto');
+        this.file_system = require('fs');
         this.endpoints = {
             "get":[],
             "post":[],
@@ -13,6 +14,30 @@ module.exports = class Saturday {
             "delete":[]
         };
     }
+
+    // static file handle
+    static_handle(request, response, route) {
+        this.file_system.readFile("."+route, (err, static_file) => {
+            if (err) {
+                throw err;
+            }
+    
+            response.statusCode = 200;
+           
+            if (route.includes('.js')) {
+                response.setHeader('Content-Type', 'application/javascript');
+            } 
+            else if (route.includes('.css')) {
+                response.setHeader('Content-Type', 'text/css');
+            } else {
+                response.setHeader('Content-Type', 'text/plain');
+            }
+
+            response.write(static_file);
+    
+            response.end();
+        })
+    };
 
     // Called when server recieves request
     request_handle(request, response) {
@@ -23,6 +48,10 @@ module.exports = class Saturday {
         const method = request.method.toLowerCase();
         
         console.log(`Route: ${route} Method: ${method}`);
+
+        if (route.includes('.js') || route.includes('.css')) {
+            this.static_handle(request, response, route);
+        }
 
         this.endpoints[method].forEach(endpoint => {
             

@@ -44,11 +44,12 @@ datab.connect(url, (err, client) => {
                 const user_ip = request.connection.remoteAddress;
                 
                 user_collection.findOne({token: user_id, last_ip: user_ip}, (err, res) => {
-                    
+                 
                     if (res) {
                         rendered_html = rendered_html.replace("${user_email}", res.email.replace("%40", "@"));
-                    }
-
+                        rendered_html = rendered_html.replace("${flash_message}", `You are logged in as ${res.email.replace("%40", "@")}`);
+                    } 
+                    
                     response.write(rendered_html);
                     response.end(); 
                 });
@@ -56,6 +57,8 @@ datab.connect(url, (err, client) => {
                 console.log(user_id);
                 console.log(user_ip);
             } else {
+                rendered_html = rendered_html.replace("${user_email}", '<a style="color: black; text-decoration: none;" href="/signup">Sign Up</a>');
+                rendered_html = rendered_html.replace("${flash_message}", "Sign up for a FREE account to get unlimited summaries");
                 console.log("Not in db");
                 response.write(rendered_html);
                 response.end(); 
@@ -158,13 +161,25 @@ datab.connect(url, (err, client) => {
 
                         response.setHeader('Set-Cookie', `pagesumtoken=${utoken}; Max-Age=259200`);
                         response.setHeader('Location', '/');
-                        user_collection.updateOne({email: postdata.email}, {$set:{token: utoken, last_ip: user_ip}}, (err, res) => {});
+                        user_collection.updateOne({email: postdata.email}, {$set:{token: utoken, last_ip: user_ip}}, (err, res) => {response.end();});
                     } else {
-                        response.statusCode = 200;
-                        response.setHeader('Content', 'text/plain');
-                        response.write("PASSWORD DID NOT MATCH");
+                        file_system.readFile('templates/login.html', (err, html) => {
+                            if (err) {
+                                throw err;
+                            }
+                    
+                            response.statusCode = 200;
+                            response.setHeader('Content-Type', 'text/html');
+                    
+                            let rendered_html = html.toString().replace("${token}", app.token(16));
+                            
+                            rendered_html = rendered_html.replace("${flash_message}", "Invalid login");
+                    
+                            response.write(rendered_html);
+                    
+                            response.end();
+                        })
                     }  
-                    response.end();
                 })
                 
             }
@@ -175,12 +190,16 @@ datab.connect(url, (err, client) => {
     const simplereq = require('./simplerequest');
     app.get('/scan', (request, response) => {
         const url_query = app.extract_query(request.url);
-        simplereq.make_request(url_query.url, (data) => {
-            response.statusCode = 200;
-            response.setHeader('Content-Type', 'text/plain');
-            response.write(data);
-            response.end();
-        })
+        if (url_query.token === "free_user") {
+            
+        } else {
+            simplereq.make_request(url_query.url, (data) => {
+                response.statusCode = 200;
+                response.setHeader('Content-Type', 'text/plain');
+                response.write(data);
+                response.end();
+            })
+        }
     })
 
     const res = user_collection.find({}).toArray((err,stuff) => {
