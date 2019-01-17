@@ -27,64 +27,52 @@ datab.connect(url, (err, client) => {
 
     // LANDING PAGE
     app.get('/', (request, response) => {
-        response.statusCode = 200;
-        response.setHeader('Content-Type', 'text/html');
+
+        const poss_cookie = request.headers.cookie;
         
-        file_system.readFile('templates/tool.html', (err, html) => {
-            if (err) {
-                throw err;
-            }
-
-            let rendered_html = html.toString().replace("${token}", app.token(16));
-
-            const poss_cookie = request.headers.cookie;
+        if (poss_cookie) {
+            const user_id = poss_cookie.replace('pagesumtoken=', '');
+            const user_ip = request.connection.remoteAddress;
             
-            if (poss_cookie) {
-                const user_id = poss_cookie.replace('pagesumtoken=', '');
-                const user_ip = request.connection.remoteAddress;
-                
-                user_collection.findOne({token: user_id, last_ip: user_ip}, (err, res) => {
-                 
-                    if (res) {
-                        rendered_html = rendered_html.replace("${user_email}", res.email.replace("%40", "@"));
-                        rendered_html = rendered_html.replace("${flash_message}", `You are logged in as ${res.email.replace("%40", "@")}`);
-                    } 
+            user_collection.findOne({token: user_id, last_ip: user_ip}, (err, res) => {
+             
+                if (res) {
                     
-                    response.write(rendered_html);
-                    response.end(); 
-                });
+                    const html_vars = {
+                        token: app.token(16), 
+                        flash_message: `You are logged in as ${res.email.replace("%40", "@")}`, 
+                        user_email: res.email.replace("%40", "@")
+                    };
+                    
+                    console.log("FOUND IN DB");
+                    app.render_html(response, html_vars, "tool.html");
+                
+                    } else {
 
-                console.log(user_id);
-                console.log(user_ip);
-            } else {
-                rendered_html = rendered_html.replace("${user_email}", '<a style="color: black; text-decoration: none;" href="/signup">Sign Up</a>');
-                rendered_html = rendered_html.replace("${flash_message}", "Sign up for a FREE account to get unlimited summaries");
-                console.log("Not in db");
-                response.write(rendered_html);
-                response.end(); 
-            }
-        })
+                        const html_vars = {
+                            token: app.token(16), 
+                            flash_message: "Sign up for a FREE account to get unlimited summaries", 
+                            user_email: '<a style="color: black; text-decoration: none;" href="/signup">Sign Up</a>'
+                        };
+                    
+                        app.render_html(response, html_vars, "tool.html");
+                    }
+            });
+
+            console.log(user_id);
+            console.log(user_ip);
+
+        } 
     });
     
     // SIGN UP
     app.get('/signup', (request, response) => {
+        
+        const html_vars = {
+            token: app.token(16), 
+        };
     
-        file_system.readFile('templates/signup.html', (err, html) => {
-            if (err) {
-                throw err;
-            }
-    
-            response.statusCode = 200;
-            response.setHeader('Content-Type', 'text/html');
-    
-            
-            
-            const rendered_html = html.toString().replace("${token}", app.token(16));
-    
-            response.write(rendered_html);
-    
-            response.end();
-        })
+        app.render_html(response, html_vars, "signup.html");
         
     });
     
@@ -104,45 +92,42 @@ datab.connect(url, (err, client) => {
                         }, (err, res) => {
                         
                         if (!(err)) {
+                            
                             console.log("SUCCESSFUL INSERT");
                             response.statusCode = 303;
                             response.setHeader('Location', '/login');
-                        } else {
-                            response.statusCode = 200;
-                            response.setHeader('Content-Type', 'text/plain');
-                            console.log("FAILED INSERT");
-                            response.write("FAILED INSERT");
-                        }
+                            response.end();
                         
-                        response.end();
+                        } else {
+                            
+                            const html_vars = {
+                                token: app.token(16),
+                                flash_message: "Failed to create account" 
+                            };
+                        
+                            app.render_html(response, html_vars, "signup.html");
+                        }
                     });
                 });  
 
             } else {
-                response.statusCode = 200;
-                response.setHeader('Content-Type', 'text/plain');
-                response.write("EMAIL ALREADY IN DATABASE");
-                response.end();
+                const html_vars = {
+                    token: app.token(16),
+                    flash_message: "Account with that email already exists" 
+                };
+                app.render_html(response, html_vars, "signup.html");
             }
         });
     });
 
     // LOGIN
     app.get('/login', (request, response) => {
-        file_system.readFile('templates/login.html', (err, html) => {
-            if (err) {
-                throw err;
-            }
-    
-            response.statusCode = 200;
-            response.setHeader('Content-Type', 'text/html');
-    
-            const rendered_html = html.toString().replace("${token}", app.token(16));
-    
-            response.write(rendered_html);
-    
-            response.end();
-        })
+
+        const html_vars = {
+            token: app.token(16),
+        };
+        
+        app.render_html(response, html_vars, "login.html");
     });
 
     app.post('/login', (request, response, postdata) => {
@@ -161,24 +146,19 @@ datab.connect(url, (err, client) => {
 
                         response.setHeader('Set-Cookie', `pagesumtoken=${utoken}; Max-Age=259200`);
                         response.setHeader('Location', '/');
-                        user_collection.updateOne({email: postdata.email}, {$set:{token: utoken, last_ip: user_ip}}, (err, res) => {response.end();});
-                    } else {
-                        file_system.readFile('templates/login.html', (err, html) => {
-                            if (err) {
-                                throw err;
-                            }
-                    
-                            response.statusCode = 200;
-                            response.setHeader('Content-Type', 'text/html');
-                    
-                            let rendered_html = html.toString().replace("${token}", app.token(16));
-                            
-                            rendered_html = rendered_html.replace("${flash_message}", "Invalid login");
-                    
-                            response.write(rendered_html);
-                    
+                        
+                        user_collection.updateOne({email: postdata.email}, {$set:{token: utoken, last_ip: user_ip}}, (err, res) => {
                             response.end();
-                        })
+                        });
+                    
+                    } else {
+                        const html_vars = {
+                            token: app.token(16),
+                            flash_message: "Invalid login"
+                        };
+                        
+                        app.render_html(response, html_vars, "login.html");
+
                     }  
                 })
                 

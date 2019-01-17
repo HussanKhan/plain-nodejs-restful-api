@@ -16,7 +16,7 @@ module.exports = class Saturday {
     }
 
     // static file handle
-    static_handle(request, response, route) {
+    static_handle(response, route) {
         this.file_system.readFile("."+route, (err, static_file) => {
             if (err) {
                 throw err;
@@ -38,6 +38,34 @@ module.exports = class Saturday {
             response.end();
         })
     };
+    
+    render_html (response, render_temp={}, html_doc) {
+        this.file_system.readFile("./templates/"+html_doc, (err, html) => {
+            
+            if (!(response.statusCode != 200)) {
+                response.statusCode = 200;
+            } 
+            
+            response.setHeader('Content-Type', 'text/html');
+            
+            if (err) {
+                response.write(`Problem: ${err}`);
+                throw err;
+            } else {
+                const html_vars = Object.keys(render_temp);
+                console.log(html_vars);
+                let rendered_html = html.toString()
+
+                html_vars.forEach((html_var) => {
+                    rendered_html = rendered_html.replace("${" + html_var + "}", render_temp[html_var]);
+                });
+
+                response.write(rendered_html);
+            }
+            
+            response.end();
+        })
+    }
 
     // Called when server recieves request
     request_handle(request, response) {
@@ -50,7 +78,7 @@ module.exports = class Saturday {
         console.log(`Route: ${route} Method: ${method}`);
 
         if (route.includes('.js') || route.includes('.css')) {
-            this.static_handle(request, response, route);
+            this.static_handle(response, route);
         }
 
         this.endpoints[method].forEach(endpoint => {
