@@ -177,6 +177,9 @@ datab.connect(url, (err, client) => {
     const simplereq = require('./simplerequest');
     app.get('/scan', (request, response) => {
         const url_query = app.extract_query(request.url);
+
+        console.log(url_query.url);
+        
         if (url_query.token === "free_user") {
             
         } else {
