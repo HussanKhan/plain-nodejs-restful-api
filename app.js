@@ -24,6 +24,8 @@ datab.connect(url, (err, client) => {
     const db = client.db("user_Accounts");
 
     const user_collection = db.collection('pagesum_user');
+    const form_collection = db.collection('form_tokens');
+    const no_account_collection = db.collection('no_account_users');
 
     // LANDING PAGE
     app.get('/', (request, response) => {
@@ -39,7 +41,6 @@ datab.connect(url, (err, client) => {
                 if (res) {
                     
                     const html_vars = {
-                        token: app.token(16), 
                         flash_message: `You are logged in as ${res.email.replace("%40", "@")}`, 
                         user_email: res.email.replace("%40", "@")
                     };
@@ -50,7 +51,6 @@ datab.connect(url, (err, client) => {
                     } else {
 
                         const html_vars = {
-                            token: app.token(16), 
                             flash_message: "Sign up for a FREE account to get unlimited summaries", 
                             user_email: '<a style="color: black; text-decoration: none;" href="/signup">Sign Up</a>'
                         };
@@ -62,7 +62,14 @@ datab.connect(url, (err, client) => {
             console.log(user_id);
             console.log(user_ip);
 
-        } 
+        } else {
+            const html_vars = {
+                flash_message: "Sign up for a FREE account to get unlimited summaries", 
+                user_email: '<a style="color: black; text-decoration: none;" href="/signup">Sign Up</a>'
+            };
+        
+            app.render_html(response, html_vars, "tool.html");
+        }
     });
     
     // SIGN UP
@@ -166,19 +173,27 @@ datab.connect(url, (err, client) => {
         });
     });
      
-    // API CONNECTION
+    // API ENDPOINT
     const simplereq = require('./simplerequest');
     app.get('/scan', (request, response) => {
         const url_query = app.extract_query(request.url);
         if (url_query.token === "free_user") {
             
         } else {
-            simplereq.make_request(url_query.url, (data) => {
+            if (url_query.url.includes("http")) {
+                simplereq.make_request(url_query.url, (data) => {
+                    response.statusCode = 200;
+                    response.setHeader("Access-Control-Allow-Origin", "*");
+                    response.setHeader('Content-Type', 'text/plain');
+                    response.write(data);
+                    response.end();
+                })
+            } else {
                 response.statusCode = 200;
                 response.setHeader('Content-Type', 'text/plain');
-                response.write(data);
+                response.write("");
                 response.end();
-            })
+            }
         }
     })
 

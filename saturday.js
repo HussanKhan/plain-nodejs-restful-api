@@ -39,6 +39,7 @@ module.exports = class Saturday {
         })
     };
     
+    // LOADS HTML FILE AND MAKES RESPONSE
     render_html (response, render_temp={}, html_doc) {
         this.file_system.readFile("./templates/"+html_doc, (err, html) => {
             
@@ -77,6 +78,7 @@ module.exports = class Saturday {
         
         console.log(`Route: ${route} Method: ${method}`);
 
+        // Send static file requests to static_request method
         if (route.includes('.js') || route.includes('.css')) {
             this.static_handle(response, route);
         }

@@ -25,3 +25,5 @@ if (flash_text != "${flash_message}") {
     }, 7000);
     
 }
+
+// document.getElementById('form').addEventListener("submit"
